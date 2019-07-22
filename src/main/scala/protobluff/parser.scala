@@ -4,9 +4,11 @@ import Function.{const => κ}
 
 import atto._
 import Atto._
+
 import cats._
 import cats.implicits._
 import cats.data.NonEmptyList
+
 
 /** parser package provides parsers for all parts of Protobuf grammar.
   *
@@ -243,6 +245,13 @@ object parser {
     * @group lexical
     */
   val quote: Parser[Char] = char('"') | char(''')
+
+  /**
+    * parse a lexical token
+    * 
+    * @group lexical
+    */
+  def token(tok: Token): Parser[String] = string(tok.str)
 
   /**
     *  import = "import" [ "weak" | "public" ] strLit ";"

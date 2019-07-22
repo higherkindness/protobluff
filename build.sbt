@@ -10,7 +10,8 @@ lazy val root = (project in file("."))
     name := "protobluff",
     libraryDependencies ++= Seq(
       atto,
-      scalaTest % Test
+      specs2 % Test
     ),
-    scalacOptions in (Compile, doc) ++= Seq("-groups", "-implicits")
+    scalacOptions in (Compile, doc) ++= Seq("-groups", "-implicits"),
+    scalacOptions in Test ++= Seq("-Yrangepos")
   )

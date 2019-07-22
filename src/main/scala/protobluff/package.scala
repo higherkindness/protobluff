@@ -19,7 +19,7 @@ package object protobluff {
   )
 
   sealed trait Type {
-    def conceal: Type
+    def conceal: Type = this
   }
   object Type {
     final object TNull                                                 extends Type
@@ -40,7 +40,7 @@ package object protobluff {
     final object TBytes                                                extends Type
     final case class TNamedType(name: String)                          extends Type
     final case class TRepeated(value: Type)                            extends Type
-    final case class TOneOf(name: String, fields: NonEmptyList[Field]) extends Type
+    final case class TOneOf(name: String, fields: List[Field]) extends Type
     final case class TMap(keyTpe: Type, value: Type)                   extends Type
     final case class TEnum(
         name: String,
@@ -65,12 +65,14 @@ package object protobluff {
 
   final case class Package(name: String)
 
-  final case class Import(pkg: String, tpe: Option[Import.Type])
+  final case class Import(tpe: Option[Import.Type], pkg: String)
   object Import {
     sealed trait Type
     object Type {
       case object Weak extends Type
       case object Public extends Type
+      val weak: Type = Weak
+      val public: Type = Public
     }
   }
 

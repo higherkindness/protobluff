@@ -56,21 +56,21 @@ object parser {
   val decimalDigit: Parser[Char] = Atto.digit
 
   /**
-    *  octalDigit   = "0" … "7"
+    * octalDigit   = "0" … "7"
     *
     * @group lexical
     */
   val octalDigit: Parser[Char] = Atto.octalDigit
 
   /**
-    *  hexDigit     = "0" … "9" | "A" … "F" | "a" … "f"
+    * hexDigit     = "0" … "9" | "A" … "F" | "a" … "f"
     *
     * @group lexical
     */
   val hexDigit: Parser[Char] = Atto.hexDigit
 
   /**
-    *  ident = letter { letter | decimalDigit | "_" }
+    * ident = letter { letter | decimalDigit | "_" }
     *
     * @group lexical
     */
@@ -99,35 +99,35 @@ object parser {
   val constant: Parser[String] = fullIdent | intLit | floatLit | strLit | boolLit.map(_.toString)
 
   /**
-    *  messageName = ident
+    * messageName = ident
     *
     * @group lexical
     */
   val messageName: Parser[String] = ident
 
   /**
-    *  enumName = ident
+    * enumName = ident
     *
     * @group lexical
     */
   val enumName: Parser[String] = ident
 
   /**
-    *  fieldName = ident
+    * fieldName = ident
     *
     * @group lexical
     */
   val fieldName: Parser[String] = ident
 
   /**
-    *  oneofName = ident
+    * oneofName = ident
     *
     * @group lexical
     */
   val oneofName: Parser[String] = ident
 
   /**
-    *  mapName = ident
+    * mapName = ident
     *
     * @group lexical
     */
@@ -141,14 +141,14 @@ object parser {
   val serviceName: Parser[String] = ident
 
   /**
-    *  rpcName = ident
+    * rpcName = ident
     *
     * @group lexical
     */
   val rpcName: Parser[String] = ident
 
   /**
-    *  messageType = [ "." ] { ident "." } messageName
+    * messageType = [ "." ] { ident "." } messageName
     *
     * @group lexical
     */
@@ -158,21 +158,21 @@ object parser {
     } yield initial.fold("")(_.toString) ++ middle.mkString(".")
 
   /**
-    *  enumType = [ "." ] { ident "." } enumName
+    * enumType = [ "." ] { ident "." } enumName
     *
     * @group lexical
     */
   val enumType: Parser[String] = messageType
 
   /**
-    *  decimalLit = ( "1" … "9" ) { decimalDigit }
+    * decimalLit = ( "1" … "9" ) { decimalDigit }
     *
     * @group lexical
     */
   val decimalLit: Parser[String] = many1(digit).map(_.mkString_("", "", ""))
 
   /**
-    *  octalLit   = "0" { octalDigit }
+    * octalLit   = "0" { octalDigit }
     *
     * @group lexical
     */
@@ -181,7 +181,7 @@ object parser {
     }
 
   /**
-    *  hexLit     = "0" ( "x" | "X" ) hexDigit { hexDigit }
+    * hexLit     = "0" ( "x" | "X" ) hexDigit { hexDigit }
     *
     * @group lexical
     */
@@ -189,14 +189,14 @@ object parser {
     many1(hexDigit).map(nel => "0x" ++ nel.mkString_("", "", ""))
 
   /**
-    *  intLit     = decimalLit | octalLit | hexLit
+    * intLit     = decimalLit | octalLit | hexLit
     *
     * @group lexical
     */
   val intLit: Parser[String] = decimalLit | octalLit | hexLit
 
   /**
-    *  decimals  = decimalDigit { decimalDigit }
+    * decimals  = decimalDigit { decimalDigit }
     *
     * {{{
     * scala> decimals.parse("1234321").done
@@ -208,7 +208,7 @@ object parser {
   val decimals: Parser[String] = many(decimalDigit).map(_.mkString)
 
   /**
-    *  exponent  = ( "e" | "E" ) [ "+" | "-" ] decimals
+    * exponent  = ( "e" | "E" ) [ "+" | "-" ] decimals
     *
     * @group lexical
     */
@@ -254,7 +254,7 @@ object parser {
   def token(tok: Token): Parser[String] = string(tok.str)
 
   /**
-    *  import = "import" [ "weak" | "public" ] strLit ";"
+    * import = "import" [ "weak" | "public" ] strLit ";"
     *
     * @group import
     */
@@ -265,7 +265,7 @@ object parser {
                                   strLit  << skipWhitespace << char(';') << skipWhitespace).mapN(Import.apply)
 
   /**
-    *  package = "package" fullIdent ";"
+    * package = "package" fullIdent ";"
     *
     * @group package
     */
@@ -275,14 +275,14 @@ object parser {
   } yield Package(name)
 
   /**
-    *  option = "option" optionName  "=" constant ";"
+    * option = "option" optionName  "=" constant ";"
     *
     * @group option
     */
 
 
   /**
-    *  optionName = ( ident | "(" fullIdent ")" ) { "." ident }
+    * optionName = ( ident | "(" fullIdent ")" ) { "." ident }
     *
     * @group option
     */
@@ -290,7 +290,7 @@ object parser {
 
 
   /**
-    *  type = "double" | "float" | "int32" | "int64" | "uint32" | "uint64" | "sint32" | "sint64" | "fixed32" | "fixed64" | "sfixed32" | "sfixed64" | "bool" | "string" | "bytes" | messageType | enumType
+    * type = "double" | "float" | "int32" | "int64" | "uint32" | "uint64" | "sint32" | "sint64" | "fixed32" | "fixed64" | "sfixed32" | "sfixed64" | "bool" | "string" | "bytes" | messageType | enumType
     *
     * @group fields
     */
@@ -313,7 +313,7 @@ object parser {
     enumType.map(n => Type.TNamedType(n).conceal)
 
   /**
-    *  fieldNumber = intLit;
+    * fieldNumber = intLit;
     * @group fields
     */
   val fieldNumber: Parser[Int] = intLit.map(_.toInt)
@@ -346,7 +346,7 @@ object parser {
 
 
   /**
-    *  field = [ "repeated" ] type fieldName "=" fieldNumber [ "[" fieldOptions "]" ] ";"
+    * field = [ "repeated" ] type fieldName "=" fieldNumber [ "[" fieldOptions "]" ] ";"
     * @group fields
     */
   val field: Parser[Field] = for {
@@ -355,7 +355,7 @@ object parser {
   } yield field.copy(isRepeated = isRepeated)
 
   /**
-    *  oneof = "oneof" oneofName "{" { oneofField | emptyStatement } "}"
+    * oneof = "oneof" oneofName "{" { oneofField | emptyStatement } "}"
     * 
     * @group fields
     */
@@ -366,7 +366,7 @@ object parser {
     } yield Type.TOneOf(name, fields)
 
   /**
-    *  mapField = "map" "<" keyType "," type ">" mapName "=" fieldNumber [ "[" fieldOptions "]" ] ";"
+    * mapField = "map" "<" keyType "," type ">" mapName "=" fieldNumber [ "[" fieldOptions "]" ] ";"
     * 
     * @group fields
     */
@@ -384,48 +384,48 @@ object parser {
   } yield Field(name, Type.TMap(key, value), number, opts, false, true)
 
   /**
-    *  keyType = "int32" | "int64" | "uint32" | "uint64" | "sint32" | "sint64" | "fixed32" | "fixed64" | "sfixed32" | "sfixed64" | "bool" | "string"
+    * keyType = "int32" | "int64" | "uint32" | "uint64" | "sint32" | "sint64" | "fixed32" | "fixed64" | "sfixed32" | "sfixed64" | "bool" | "string"
     */
   /**
-    *  reserved = "reserved" ( ranges | fieldNames ) ";"
+    * reserved = "reserved" ( ranges | fieldNames ) ";"
     */
   /**
-    *  ranges = range { "," range }
+    * ranges = range { "," range }
     */
   /**
-    *  range =  intLit [ "to" ( intLit | "max" ) ]
+    * range =  intLit [ "to" ( intLit | "max" ) ]
     */
   /**
-    *  fieldNames = fieldName { "," fieldName }
+    * fieldNames = fieldName { "," fieldName }
     */
   /**
-    *  enum = "enum" enumName enumBody
+    * enum = "enum" enumName enumBody
     */
   /**
-    *  enumBody = "{" { option | enumField | emptyStatement } "}"
+    * enumBody = "{" { option | enumField | emptyStatement } "}"
     */
   /**
-    *  enumField = ident "=" intLit [ "[" enumValueOption { ","  enumValueOption } "]" ]";"
+    * enumField = ident "=" intLit [ "[" enumValueOption { ","  enumValueOption } "]" ]";"
     */
   /**
-    *  enumValueOption = optionName "=" constant
+    * enumValueOption = optionName "=" constant
     */
   /**
-    *  message = "message" messageName messageBody
+    * message = "message" messageName messageBody
     */
   /**
-    *  messageBody = "{" { field | enum | message | option | oneof | mapField | reserved | emptyStatement } "}"
+    * messageBody = "{" { field | enum | message | option | oneof | mapField | reserved | emptyStatement } "}"
     */
   /**
-    *  service = "service" serviceName "{" { option | rpc | emptyStatement } "}"
+    * service = "service" serviceName "{" { option | rpc | emptyStatement } "}"
     */
   /**
-    *  rpc = "rpc" rpcName "(" [ "stream" ] messageType ")" "returns" "(" [ "stream" ] messageType ")" (( "{" {option | emptyStatement } "}" ) | ";")
+    * rpc = "rpc" rpcName "(" [ "stream" ] messageType ")" "returns" "(" [ "stream" ] messageType ")" (( "{" {option | emptyStatement } "}" ) | ";")
     */
   /**
-    *  proto = syntax { import | package | option | topLevelDef | emptyStatement }
+    * proto = syntax { import | package | option | topLevelDef | emptyStatement }
     */
   /**
-    *  topLevelDef = message | enum | service
+    * topLevelDef = message | enum | service
     */
 }

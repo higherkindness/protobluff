@@ -82,11 +82,8 @@ class ParserSpec extends Specification with ScalaCheck with Generators {
   def octalDigit = Prop.forAll(Gen.oneOf('0', '7')) { c =>
     parser.octalDigit.parse(c.toString).done.either must beRight(c)
   }
-  def hexDigit = Prop.forAll(Gen.oneOf(
-                               Gen.oneOf('0', '7'),
-                               Gen.oneOf('A', 'F'),
-                               Gen.oneOf('a', 'b'))) { c =>
-    parser.hexDigit.parse(c.toString).done.either must beRight(c)
+  def hexDigit = Prop.forAll(hexDigitGen) { c =>
+    parser.hexDigit.parse(c).done.either must beRight(c)
   }
   def ident = Prop.forAll(identGen) { i =>
     parser.ident.parse(i).done.either must beRight(i)
@@ -94,19 +91,29 @@ class ParserSpec extends Specification with ScalaCheck with Generators {
   def fullIdent = Prop.forAll(fullIdentGen) { i =>
     parser.fullIdent.parse(i).done.either must beRight(i)
   }
-  def messageName = 1 must_== 33
-  def enumName = 1 must_== 33
-  def fieldName = 1 must_== 33
-  def oneofName = 1 must_== 33
-  def mapName = 1 must_== 33
-  def serviceName = 1 must_== 33
-  def rpcName = 1 must_== 33
-  def messageType = 1 must_== 33
-  def enumType = 1 must_== 33
-  def intLit = 1 must_== 33
-  def decimalLit = 1 must_== 33
-  def octalLit = 1 must_== 33
-  def hexLit = 1 must_== 33
+  def messageName = ident
+  def enumName = ident
+  def fieldName = ident
+  def oneofName = ident
+  def mapName = ident
+  def serviceName = ident
+  def rpcName = ident
+  def messageType = Prop.forAll(messageTypeGen) { mtg =>
+    parser.messageType.parse(mtg).done.either must beRight(mtg)
+  }
+  def enumType = messageType
+  def intLit = Prop.forAll(intLitGen) { n =>
+    parser.intLit.parse(n).done.either must beRight(n)
+  }
+  def decimalLit = Prop.forAll(decimalLitGen) { d =>
+    parser.decimalLit.parse(d).done.either must beRight(d)
+  }
+  def octalLit = Prop.forAll(octalLitGen) { d =>
+    parser.octalLit.parse(d).done.either must beRight(d)
+  }
+  def hexLit = Prop.forAll(hexLitGen) { d =>
+    parser.hexLit.parse(d).done.either must beRight(d)
+  }
   def boolLit = 1 must_== 33
   def strLit = 1 must_== 33
   def charValue = 1 must_== 33
@@ -144,6 +151,6 @@ class ParserSpec extends Specification with ScalaCheck with Generators {
   def rpc = 1 must_== 33
   def proto = 1 must_== 33
   def topLevelDef = 1 must_== 33
-  
+
 }
   

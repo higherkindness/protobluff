@@ -177,7 +177,7 @@ object parser {
     * @group lexical
     */
   val octalLit: Parser[String] = char('0') >>= { z =>
-      many1(octalDigit).map(nel => "0" ++ nel.mkString_("", "", ""))
+      many(octalDigit).map(nel => "0" ++ nel.mkString_("", "", ""))
     }
 
   /**
@@ -185,8 +185,11 @@ object parser {
     *
     * @group lexical
     */
-  val hexLit: Parser[String] = (char('0') >> (char('x') | char('X'))) >>
-    many1(hexDigit).map(nel => "0x" ++ nel.mkString_("", "", ""))
+  val hexLit: Parser[String] = for {
+    z <- string("0")
+    x <- (string("x") | string("X"))
+    n <- many1(hexDigit).map(_.mkString_("", "", ""))
+  } yield z ++ x ++ n
 
   /**
     * intLit     = decimalLit | octalLit | hexLit

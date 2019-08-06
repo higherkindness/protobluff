@@ -92,8 +92,8 @@ object parser {
     } yield (first :: rest).mkString
 
   /**
-    * constant = fullIdent | ( [ "-" | "+" ] intLit ) | ( [ "-" | "+" ] floatLit ) | strLit | boolLit 
-    * 
+    * constant = fullIdent | ( [ "-" | "+" ] intLit ) | ( [ "-" | "+" ] floatLit ) | strLit | boolLit
+    *
     * @group lexical
     */
   val constant: Parser[String] = fullIdent | intLit | floatLit | strLit | boolLit.map(_.toString)
@@ -251,7 +251,7 @@ object parser {
 
   /**
     * parse a lexical token
-    * 
+    *
     * @group lexical
     */
   def token(tok: Token): Parser[String] = string(tok.str)
@@ -297,23 +297,25 @@ object parser {
     *
     * @group fields
     */
-  val `type`: Parser[Type] = string("double").as(Type.TDouble.conceal) |
-    string("float").as(Type.TFloat.conceal) |
-    string("int32").as(Type.TInt32.conceal) |
-    string("int64").as(Type.TInt64.conceal) |
-    string("uint32").as(Type.TUint32.conceal) |
-    string("uint64").as(Type.TUint64.conceal) |
-    string("sint32").as(Type.TSint32.conceal) |
-    string("sint64").as(Type.TSint64.conceal) |
-    string("fixed32").as(Type.TFixed32.conceal) |
-    string("fixed64").as(Type.TFixed64.conceal) |
-    string("sfixed32").as(Type.TSfixed32.conceal) |
-    string("sfixed64").as(Type.TSfixed64.conceal) |
-    string("bool").as(Type.TBool.conceal) |
-    string("string").as(Type.TString.conceal) |
-    string("bytes").as(Type.TBytes.conceal) |
-    messageType.map(n => Type.TNamedType(n).conceal) |
-    enumType.map(n => Type.TNamedType(n).conceal)
+  val primitiveType: Parser[Type] = string("double").as(Type.TDouble.widen) |
+    string("float").as(Type.TFloat.widen) |
+    string("int32").as(Type.TInt32.widen) |
+    string("int64").as(Type.TInt64.widen) |
+    string("uint32").as(Type.TUint32.widen) |
+    string("uint64").as(Type.TUint64.widen) |
+    string("sint32").as(Type.TSint32.widen) |
+    string("sint64").as(Type.TSint64.widen) |
+    string("fixed32").as(Type.TFixed32.widen) |
+    string("fixed64").as(Type.TFixed64.widen) |
+    string("sfixed32").as(Type.TSfixed32.widen) |
+    string("sfixed64").as(Type.TSfixed64.widen) |
+    string("bool").as(Type.TBool.widen) |
+    string("string").as(Type.TString.widen) |
+    string("bytes").as(Type.TBytes.widen)
+
+  val tpe: Parser[Type] = primitiveType |
+    messageType.map(n => Type.TNamedType(n).widen) |
+    enumType.map(n => Type.TNamedType(n).widen)
 
   /**
     * fieldNumber = intLit;

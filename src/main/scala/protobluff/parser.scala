@@ -389,18 +389,33 @@ object parser {
   } yield Field.Map(name, Type.TMap(key, value), number, opts)
 
 
+  type Ranges = NonEmptyList[Either[String, Range]]
+  type FieldNames = NonEmptyList[String]
+
   /**
     * reserved = "reserved" ( ranges | fieldNames ) ";"
     */
+  val reserved: Parser[Either[Ranges, FieldNames]] = string("reserved") >> skipWhitespace >> either(ranges, fieldNames) << skipWhitespace << semicolon << skipWhitespace
+
   /**
     * ranges = range { "," range }
     */
+  val ranges: Parser[Ranges] = sepBy1(either(intLit, range), skipWhitespace >> comma << skipWhitespace)
+
   /**
     * range =  intLit [ "to" ( intLit | "max" ) ]
     */
+  val range: Parser[Range] = for {
+      start <- intLit << skipWhitespace
+      _ <- string("to") << skipWhitespace
+      end <- (string("max").as(none[String]) | intLit.map(_.some)) << skipWhitespace
+    } yield Range(start, end)
+
   /**
     * fieldNames = fieldName { "," fieldName }
     */
+  val fieldNames: Parser[FieldNames] = sepBy1(fieldName, skipWhitespace >> comma << skipWhitespace)
+
   /**
     * enum = "enum" enumName enumBody
     */

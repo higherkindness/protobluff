@@ -32,5 +32,5 @@ object Token {
   val Message = Token("message")
   val Enum = Token("enum")
   val Rpc = Token("rpc")
-  val Service = Token("service")    
+  val Service = Token("service")
 }

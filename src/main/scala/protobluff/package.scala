@@ -70,6 +70,8 @@ package object protobluff {
 
   }
 
+  final case class Range(start: String /*intlit*/, end: Option[String])
+
   sealed trait TopLevelDefinition
 
   object TopLevelDefinition {
@@ -97,7 +99,6 @@ package object protobluff {
       )
     }
   }
-
 
   final case class Package(name: String)
 

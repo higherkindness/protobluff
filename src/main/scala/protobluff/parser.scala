@@ -340,53 +340,54 @@ object parser {
     * oneofField = type fieldName "=" fieldNumber [ "[" fieldOptions "]" ] ";"
     * @group fields
     */
-  val oneofField: Parser[Field] = for {
-    tpe <- `type` << skipWhitespace
+  val oneofField: Parser[Field.OneOf.OneOfField] = for {
+    tpe <- tpe << skipWhitespace
     name <- fieldName << skipWhitespace
     _ <- string("=") << skipWhitespace
     position <- fieldNumber << skipWhitespace
     opts <- options
     _ <- string(";") << skipWhitespace
-  } yield Field(name, tpe, position, opts, false, false)
+  } yield Field.OneOf.OneOfField(name, tpe, position, opts)
 
 
   /**
     * field = [ "repeated" ] type fieldName "=" fieldNumber [ "[" fieldOptions "]" ] ";"
     * @group fields
     */
-  val field: Parser[Field] = for {
+  val normalField: Parser[Field.Normal] = for {
     isRepeated <- opt(string("repeated")).map(_.fold(false)(κ(true))) << skipWhitespace
-    field <- oneofField
-  } yield field.copy(isRepeated = isRepeated)
+    Field.OneOf.OneOfField(name, tpe, fn, opts) <- oneofField
+  } yield Field.Normal(name, tpe, fn, opts, isRepeated)
 
   /**
     * oneof = "oneof" oneofName "{" { oneofField | emptyStatement } "}"
-    * 
+    *
     * @group fields
     */
-  val oneof: Parser[Type.TOneOf] = for {
+  val oneof: Parser[Field.OneOf] = for {
       _ <- string("oneof") << skipWhitespace
       name <- oneofName << skipWhitespace
       fields <- braces(sepBy(oneofField, skipWhitespace)) << skipWhitespace
-    } yield Type.TOneOf(name, fields)
+    } yield Field.OneOf(name, fields)
 
   /**
     * mapField = "map" "<" keyType "," type ">" mapName "=" fieldNumber [ "[" fieldOptions "]" ] ";"
-    * 
+    *
     * @group fields
     */
-  val mapField = for {
+  val mapField: Parser[Field.Map] = for {
     _ <- string("map") << skipWhitespace
     _ <- char('<') >> skipWhitespace
-    key <- `type` << skipWhitespace
+    key <- primitiveType << skipWhitespace
     _ <- char(',') >> skipWhitespace
-    value <- `type` << skipWhitespace
+    value <- tpe << skipWhitespace
     _ <- char('>') << skipWhitespace
     name <- mapName << skipWhitespace
     _ <- char('=') << skipWhitespace
     number <- fieldNumber << skipWhitespace
     opts <- options
-  } yield Field(name, Type.TMap(key, value), number, opts, false, true)
+  } yield Field.Map(name, Type.TMap(key, value), number, opts)
+
 
   /**
     * keyType = "int32" | "int64" | "uint32" | "uint64" | "sint32" | "sint64" | "fixed32" | "fixed64" | "sfixed32" | "sfixed64" | "bool" | "string"

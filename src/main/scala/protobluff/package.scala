@@ -66,28 +66,38 @@ package object protobluff {
     final object TString                                               extends Type
     final object TBytes                                                extends Type
     final case class TNamedType(name: String)                          extends Type
-    final case class TOneOf(fields: List[Field]) extends Type
     final case class TMap(keyTpe: Type, value: Type)                   extends Type
+
+  }
+
+  sealed trait TopLevelDefinition
+
+  object TopLevelDefinition {
+
     final case class TEnum(
       name: String,
       symbols: List[(String, Int)],
       options: List[OptionValue],
       aliases: List[(String, Int)]
-    ) extends Type
-    final case class TMessage(name: String, fields: List[Field], reserved: List[List[String]]) extends Type
+    ) extends TopLevelDefinition
+
+    final case class TMessage(name: String, fields: List[Field], reserved: List[List[String]]) extends TopLevelDefinition
+
+    final case class Service(
+      name: String,
+      options: List[OptionValue],
+      rpcs: List[Service.Rpc]
+    ) extends TopLevelDefinition
+
+    object Service {
+      final case class Rpc(
+        name: String,
+        messageType: Type,
+        responseType: Type
+      )
+    }
   }
 
-  final case class Rpc(
-    name: String,
-    messageType: Type,
-    responseType: Type
-  )
-
-  final case class Service(
-    name: String,
-    options: List[OptionValue],
-    rpcs: List[Rpc]
-  )
 
   final case class Package(name: String)
 
@@ -106,8 +116,7 @@ package object protobluff {
     syntax: Syntax,
     pkg: Option[Package],
     imports: List[Import],
-    types: List[Type], // TEnum \/ TMessage
-    services: List[Service]
+    definitions: List[TopLevelDefinition]
   )
 
 }

@@ -9,17 +9,44 @@ package object protobluff {
 
   final case class OptionValue(name: String, value: String)
 
-  final case class Field(
+  sealed trait Field {
+    def widen: Field = this
+  }
+
+  object Field {
+    final case class Normal(
       name: String,
       tpe: Type,
-      position: Int,
+      fieldNumber: Int,
       options: List[OptionValue],
-      isRepeated: Boolean,
-      isMapField: Boolean
-  )
+      isRepeated: Boolean
+    ) extends Field
+
+    final case class OneOf(
+      name: String,
+      fields: List[OneOf.OneOfField]
+    ) extends Field
+
+    object OneOf {
+      final case class OneOfField(
+        name: String,
+        tpe: Type,
+        fieldNumber: Int,
+        options: List[OptionValue]
+      )
+    }
+
+    final case class Map(
+      name: String,
+      tpe: Type.TMap,
+      fieldNumber: Int,
+      options: List[OptionValue]
+    ) extends Field
+  }
+
 
   sealed trait Type {
-    def conceal: Type = this
+    def widen: Type = this
   }
   object Type {
     final object TNull                                                 extends Type
@@ -39,14 +66,13 @@ package object protobluff {
     final object TString                                               extends Type
     final object TBytes                                                extends Type
     final case class TNamedType(name: String)                          extends Type
-    final case class TRepeated(value: Type)                            extends Type
-    final case class TOneOf(name: String, fields: List[Field]) extends Type
+    final case class TOneOf(fields: List[Field]) extends Type
     final case class TMap(keyTpe: Type, value: Type)                   extends Type
     final case class TEnum(
-        name: String,
-        symbols: List[(String, Int)],
-        options: List[OptionValue],
-        aliases: List[(String, Int)]
+      name: String,
+      symbols: List[(String, Int)],
+      options: List[OptionValue],
+      aliases: List[(String, Int)]
     ) extends Type
     final case class TMessage(name: String, fields: List[Field], reserved: List[List[String]]) extends Type
   }

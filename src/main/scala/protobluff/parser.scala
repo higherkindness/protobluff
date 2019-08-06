@@ -39,7 +39,9 @@ import cats.data.NonEmptyList
   * @see https://developers.google.com/protocol-buffers/docs/reference/proto3-spec
   */
 object parser {
-  val dot = char('.')
+  val dot = token(Token.Dot)
+  val comma = token(Token.Comma)
+  val semicolon = token(Token.Semicolon)
 
   /**
     * letter = "A" … "Z" | "a" … "z"
@@ -226,7 +228,7 @@ object parser {
     */
   val floatLit: Parser[String] = string("inf") |
     string("nan") |
-    (char('.').map(_.toString) <+> decimals <+> exponent)
+    (dot <+> decimals <+> exponent)
 
   /**
     * boolLit = "true" | "false"
@@ -334,7 +336,7 @@ object parser {
     value <- constant
     } yield OptionValue(name, value)
 
-   val options: Parser[List[OptionValue]] = opt(squareBrackets(sepBy(fieldOption, skipWhitespace >> string(",") << skipWhitespace))).map(_.fold(List.empty[OptionValue])(identity))
+   val options: Parser[List[OptionValue]] = opt(squareBrackets(sepBy(fieldOption, skipWhitespace >> comma << skipWhitespace))).map(_.fold(List.empty[OptionValue])(identity))
 
   /**
     * oneofField = type fieldName "=" fieldNumber [ "[" fieldOptions "]" ] ";"

@@ -274,14 +274,17 @@ object parser {
     *
     * @group option
     */
-
+  val option: Parser[OptionValue] = string("option") >> skipWhitespace >> fieldOption
 
   /**
     * optionName = ( ident | "(" fullIdent ")" ) { "." ident }
     *
     * @group option
     */
-  val optionName = ident | parens(fullIdent)
+  val optionName: Parser[String] = for {
+      head <- ident | parens(fullIdent)
+      tail <- many(Token.dot >> ident)
+  } yield (head :: tail).mkString
 
 
   /**
@@ -320,10 +323,10 @@ object parser {
     *
     * @group fields
     */
-  val fieldOption = for {
+  val fieldOption: Parser[OptionValue] = for {
     name <- optionName << skipWhitespace
     _ <- Token.equals << skipWhitespace
-    value <- constant
+    value <- constant << skipWhitespace
     } yield OptionValue(name, value)
 
    val options: Parser[List[OptionValue]] = opt(squareBrackets(sepBy(fieldOption, skipWhitespace >> Token.comma << skipWhitespace))).map(_.fold(List.empty[OptionValue])(identity))
@@ -409,17 +412,35 @@ object parser {
   val fieldNames: Parser[FieldNames] = sepBy1(fieldName, skipWhitespace >> Token.comma << skipWhitespace)
 
   /**
-    * enum = "enum" enumName enumBody
+    * enumField = ident "=" intLit [ "[" enumValueOption { ","  enumValueOption } "]" ]";"
     */
+  val enumField = for {
+      name <- enumName << skipWhitespace
+      _ <- Token.equals << skipWhitespace
+      number <- fieldNumber << skipWhitespace
+      opts <- options << skipWhitespace
+    } yield TopLevelDefinition.Enum.Field(name, number, opts)
+
   /**
     * enumBody = "{" { option | enumField | emptyStatement } "}"
     */
+  val enumBody: Parser[List[Either[TopLevelDefinition.Enum.Field, OptionValue]]] =
+    braces(
+      many(
+        either(enumField, option)
+      )
+    )
+
   /**
-    * enumField = ident "=" intLit [ "[" enumValueOption { ","  enumValueOption } "]" ]";"
+    * enum = "enum" enumName enumBody
     */
-  /**
-    * enumValueOption = optionName "=" constant
-    */
+  val enum: Parser[TopLevelDefinition.Enum] = for {
+    _ <- Token.enum
+    name <- enumName
+    body <- enumBody
+  } yield TopLevelDefinition.Enum(name, body)
+
+
   /**
     * message = "message" messageName messageBody
     */

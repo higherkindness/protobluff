@@ -76,14 +76,21 @@ package object protobluff {
 
   object TopLevelDefinition {
 
-    final case class TEnum(
+    final case class Enum(
       name: String,
-      symbols: List[(String, Int)],
-      options: List[OptionValue],
-      aliases: List[(String, Int)]
+      declarations: List[Either[Enum.Field, OptionValue]]
     ) extends TopLevelDefinition
 
-    final case class TMessage(name: String, fields: List[Field], reserved: List[List[String]]) extends TopLevelDefinition
+    object Enum {
+      final case class Field(
+        name: String,
+        fieldNumber: Int,
+        options: List[OptionValue]
+      )
+
+    }
+
+    final case class Message(name: String, fields: List[Field], reserved: List[List[String]]) extends TopLevelDefinition
 
     final case class Service(
       name: String,

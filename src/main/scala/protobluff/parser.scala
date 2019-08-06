@@ -39,9 +39,6 @@ import cats.data.NonEmptyList
   * @see https://developers.google.com/protocol-buffers/docs/reference/proto3-spec
   */
 object parser {
-  val dot = token(Token.Dot)
-  val comma = token(Token.Comma)
-  val semicolon = token(Token.Semicolon)
 
   /**
     * letter = "A" … "Z" | "a" … "z"
@@ -88,7 +85,7 @@ object parser {
     */
   val fullIdent: Parser[String] = for {
       first <- ident
-      rest <- many(char('.') >>= { dot =>
+      rest <- many(Token.dot >>= { dot =>
                      ident.map("." ++ _)
                    })
     } yield (first :: rest).mkString
@@ -155,8 +152,8 @@ object parser {
     * @group lexical
     */
   val messageType: Parser[String] = for {
-      initial <- opt(dot)
-      middle  <- sepBy(ident, dot)
+      initial <- opt(Token.dot)
+      middle  <- sepBy(ident, Token.dot)
     } yield initial.fold("")(_.toString) ++ middle.mkString(".")
 
   /**
@@ -226,16 +223,16 @@ object parser {
     *
     * @group lexical
     */
-  val floatLit: Parser[String] = string("inf") |
-    string("nan") |
-    (dot <+> decimals <+> exponent)
+  val floatLit: Parser[String] = Token.inf |
+    Token.nan |
+    (Token.dot <+> decimals <+> exponent)
 
   /**
     * boolLit = "true" | "false"
     *
     * @group lexical
     */
-  val boolLit: Parser[Boolean] = string("true").as(true) | string("false").as(false)
+  val boolLit: Parser[Boolean] = Token.`true`.as(true) | Token.`false`.as(false)
 
   /**
     * strLit = ( "'" { charValue } "'" ) |  ( '"' { charValue } '"' )
@@ -249,25 +246,18 @@ object parser {
     *
     * @group lexical
     */
-  val quote: Parser[Char] = char('"') | char(''')
-
-  /**
-    * parse a lexical token
-    *
-    * @group lexical
-    */
-  def token(tok: Token): Parser[String] = string(tok.str)
+  val quote: Parser[String] = Token.singleQuote | Token.doubleQuote
 
   /**
     * import = "import" [ "weak" | "public" ] strLit ";"
     *
     * @group import
     */
-  val `import`: Parser[Import] = (string("import") >>
+  val `import`: Parser[Import] = (Token.`import` >>
                                     skipWhitespace >>
-                                    opt(string("weak").as(Import.Type.weak) | string("public").as(Import.Type.public)) << skipWhitespace
+                                    opt(Token.weak.as(Import.Type.weak) | Token.public.as(Import.Type.public)) << skipWhitespace
                                     ,
-                                  strLit  << skipWhitespace << char(';') << skipWhitespace).mapN(Import.apply)
+                                  strLit  << skipWhitespace << Token.semicolon << skipWhitespace).mapN(Import.apply)
 
   /**
     * package = "package" fullIdent ";"
@@ -275,8 +265,8 @@ object parser {
     * @group package
     */
   val pkg: Parser[Package] = for {
-    _ <- string("package") << skipWhitespace
-    name <- fullIdent << skipWhitespace << string(";")
+    _ <- Token.`package` << skipWhitespace
+    name <- fullIdent << skipWhitespace << Token.semicolon
   } yield Package(name)
 
   /**
@@ -332,11 +322,11 @@ object parser {
     */
   val fieldOption = for {
     name <- optionName << skipWhitespace
-    _ <- string("=") << skipWhitespace
+    _ <- Token.equals << skipWhitespace
     value <- constant
     } yield OptionValue(name, value)
 
-   val options: Parser[List[OptionValue]] = opt(squareBrackets(sepBy(fieldOption, skipWhitespace >> comma << skipWhitespace))).map(_.fold(List.empty[OptionValue])(identity))
+   val options: Parser[List[OptionValue]] = opt(squareBrackets(sepBy(fieldOption, skipWhitespace >> Token.comma << skipWhitespace))).map(_.fold(List.empty[OptionValue])(identity))
 
   /**
     * oneofField = type fieldName "=" fieldNumber [ "[" fieldOptions "]" ] ";"
@@ -345,10 +335,10 @@ object parser {
   val oneofField: Parser[Field.OneOf.OneOfField] = for {
     tpe <- tpe << skipWhitespace
     name <- fieldName << skipWhitespace
-    _ <- string("=") << skipWhitespace
+    _ <- Token.equals << skipWhitespace
     position <- fieldNumber << skipWhitespace
     opts <- options
-    _ <- string(";") << skipWhitespace
+    _ <- Token.semicolon << skipWhitespace
   } yield Field.OneOf.OneOfField(name, tpe, position, opts)
 
 
@@ -357,7 +347,7 @@ object parser {
     * @group fields
     */
   val normalField: Parser[Field.Normal] = for {
-    isRepeated <- opt(string("repeated")).map(_.fold(false)(κ(true))) << skipWhitespace
+    isRepeated <- opt(Token.repeated).map(_.fold(false)(κ(true))) << skipWhitespace
     Field.OneOf.OneOfField(name, tpe, fn, opts) <- oneofField
   } yield Field.Normal(name, tpe, fn, opts, isRepeated)
 
@@ -379,13 +369,13 @@ object parser {
     */
   val mapField: Parser[Field.Map] = for {
     _ <- string("map") << skipWhitespace
-    _ <- char('<') >> skipWhitespace
+    _ <- Token.angleBracketOpen >> skipWhitespace
     key <- primitiveType << skipWhitespace
-    _ <- char(',') >> skipWhitespace
+    _ <- Token.comma >> skipWhitespace
     value <- tpe << skipWhitespace
-    _ <- char('>') << skipWhitespace
+    _ <- Token.angleBracketClose << skipWhitespace
     name <- mapName << skipWhitespace
-    _ <- char('=') << skipWhitespace
+    _ <- Token.equals << skipWhitespace
     number <- fieldNumber << skipWhitespace
     opts <- options
   } yield Field.Map(name, Type.TMap(key, value), number, opts)
@@ -397,26 +387,26 @@ object parser {
   /**
     * reserved = "reserved" ( ranges | fieldNames ) ";"
     */
-  val reserved: Parser[Either[Ranges, FieldNames]] = string("reserved") >> skipWhitespace >> either(ranges, fieldNames) << skipWhitespace << semicolon << skipWhitespace
+  val reserved: Parser[Either[Ranges, FieldNames]] = Token.reserved >> skipWhitespace >> either(ranges, fieldNames) << skipWhitespace << Token.semicolon << skipWhitespace
 
   /**
     * ranges = range { "," range }
     */
-  val ranges: Parser[Ranges] = sepBy1(either(intLit, range), skipWhitespace >> comma << skipWhitespace)
+  val ranges: Parser[Ranges] = sepBy1(either(intLit, range), skipWhitespace >> Token.comma << skipWhitespace)
 
   /**
     * range =  intLit [ "to" ( intLit | "max" ) ]
     */
   val range: Parser[Range] = for {
       start <- intLit << skipWhitespace
-      _ <- string("to") << skipWhitespace
-      end <- (string("max").as(none[String]) | intLit.map(_.some)) << skipWhitespace
+      _ <- Token.to << skipWhitespace
+      end <- (Token.max.as(none[String]) | intLit.map(_.some)) << skipWhitespace
     } yield Range(start, end)
 
   /**
     * fieldNames = fieldName { "," fieldName }
     */
-  val fieldNames: Parser[FieldNames] = sepBy1(fieldName, skipWhitespace >> comma << skipWhitespace)
+  val fieldNames: Parser[FieldNames] = sepBy1(fieldName, skipWhitespace >> Token.comma << skipWhitespace)
 
   /**
     * enum = "enum" enumName enumBody

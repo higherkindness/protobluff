@@ -11,8 +11,9 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Seq(
       atto,
       specs2 % Test,
-      catsScalacheck % Test      
-    ),
+      catsScalacheck % Test
+      ),
+    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
     scalacOptions in (Compile, doc) ++= Seq("-groups", "-implicits"),
     scalacOptions in Test ++= Seq("-Yrangepos")
   )
